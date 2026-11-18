@@ -45,17 +45,18 @@ describe('RegisterUser', () => {
     expect(await users.findById(user.id)).toEqual(user);
   });
 
-  it('keeps an explicitly requested role', async () => {
+  it('ignores a role smuggled into the input and registers a student', async () => {
     const { registerUser } = createAuthScenario();
-
-    const user = await registerUser.execute({
+    const input = {
       email: 'admin@example.com',
       name: 'Admin',
       password: PASSWORD,
       role: 'admin',
-    });
+    };
 
-    expect(user.role).toBe('admin');
+    const user = await registerUser.execute(input);
+
+    expect(user.role).toBe('student');
   });
 
   it('rejects an email that is already registered, ignoring case and spaces', async () => {
