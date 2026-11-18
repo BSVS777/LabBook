@@ -1,6 +1,6 @@
 import type { ReservationRepository } from '../../application/ports/reservation-repository.js';
 import type { Reservation } from '../../domain/reservation.js';
-import type { TimeSlot } from '../../domain/time-slot.js';
+import { assertNoOverlap } from '../../domain/overlap-rule.js';
 
 export class InMemoryReservationRepository implements ReservationRepository {
   private readonly reservations = new Map<string, Reservation>();
@@ -14,10 +14,17 @@ export class InMemoryReservationRepository implements ReservationRepository {
     return Promise.resolve(this.reservations.get(id));
   }
 
-  findActiveOverlapping(labId: string, slot: TimeSlot): Promise<readonly Reservation[]> {
-    return Promise.resolve(
-      this.all().filter((reservation) => reservation.labId === labId && reservation.blocks(slot)),
-    );
+  /**
+   * The promise executor runs synchronously, so no other call can interleave between the check
+   * and the write; a thrown overlap error rejects the promise.
+   */
+  addIfSlotFree(reservation: Reservation): Promise<void> {
+    return new Promise((resolve) => {
+      const sameLab = this.all().filter(({ labId }) => labId === reservation.labId);
+      assertNoOverlap(reservation.slot, sameLab);
+      this.reservations.set(reservation.id, reservation);
+      resolve();
+    });
   }
 
   findByUser(userId: string): Promise<readonly Reservation[]> {

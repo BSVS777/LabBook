@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { ERROR_CODES } from '../../../shared/domain/domain-error.js';
 import { SequentialIdGenerator } from '../../../shared/test/sequential-id-generator.js';
@@ -65,6 +65,17 @@ describe('RegisterUser', () => {
 
     await expect(
       registerUser.execute({ email: ' ADA@example.com', name: 'Other', password: PASSWORD }),
+    ).rejects.toMatchObject({ code: ERROR_CODES.EMAIL_ALREADY_REGISTERED });
+  });
+
+  it('maps a duplicate-email race lost at save time to EMAIL_ALREADY_REGISTERED', async () => {
+    const { registerUser, users } = createAuthScenario();
+    await registerUser.execute({ email: 'ada@example.com', name: 'Ada', password: PASSWORD });
+    // Simulates the pre-check passing just before a concurrent registration commits.
+    vi.spyOn(users, 'findByEmail').mockResolvedValue(undefined);
+
+    await expect(
+      registerUser.execute({ email: 'ada@example.com', name: 'Other', password: PASSWORD }),
     ).rejects.toMatchObject({ code: ERROR_CODES.EMAIL_ALREADY_REGISTERED });
   });
 });

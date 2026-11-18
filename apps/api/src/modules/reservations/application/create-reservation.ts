@@ -3,7 +3,6 @@ import type { IdGenerator } from '../../../shared/application/id-generator.js';
 import { LabNotFoundError } from '../../labs/domain/lab-errors.js';
 import type { LabRepository } from '../../labs/application/ports/lab-repository.js';
 import type { BookingPolicy } from '../domain/booking-policy.js';
-import { assertNoOverlap } from '../domain/overlap-rule.js';
 import { Reservation } from '../domain/reservation.js';
 import { TimeSlot } from '../domain/time-slot.js';
 import type { ReservationRepository } from './ports/reservation-repository.js';
@@ -32,7 +31,6 @@ export class CreateReservation {
     const now = this.clock.now();
     const slot = TimeSlot.create(input.start, input.end);
     this.policy.assertCanBook(slot, now);
-    assertNoOverlap(slot, await this.reservations.findActiveOverlapping(lab.id, slot));
 
     const reservation = Reservation.create({
       id: this.ids.next(),
@@ -41,7 +39,7 @@ export class CreateReservation {
       slot,
       createdAt: now,
     });
-    await this.reservations.save(reservation);
+    await this.reservations.addIfSlotFree(reservation);
     return reservation;
   }
 }

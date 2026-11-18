@@ -49,6 +49,21 @@ describe('CreateReservation', () => {
     ).rejects.toMatchObject({ code: ERROR_CODES.RESERVATION_OVERLAP });
   });
 
+  it('lets only one of two simultaneous requests for the same slot succeed', async () => {
+    const scenario = createReservationScenario();
+    const simultaneous = [
+      request('2026-03-02T10:00', '2026-03-02T11:00', DEFAULT_LAB_ID, 'user-1'),
+      request('2026-03-02T10:00', '2026-03-02T11:00', DEFAULT_LAB_ID, 'user-2'),
+    ].map((input) => scenario.createReservation.execute(input));
+
+    const outcomes = await Promise.allSettled(simultaneous);
+
+    expect(outcomes.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
+    expect(outcomes.find(({ status }) => status === 'rejected')).toMatchObject({
+      reason: { code: ERROR_CODES.RESERVATION_OVERLAP },
+    });
+  });
+
   it('frees the slot again once the reservation is cancelled', async () => {
     const scenario = createReservationScenario();
     const first = await scenario.createReservation.execute(
