@@ -1,9 +1,11 @@
 # Feature: Lab Reservations System
 
 ## Objective
+
 Production-quality lab reservation app (API + web) with hexagonal architecture organized by feature.
 
 ## Scope and constraints
+
 - Monorepo (pnpm workspaces): `apps/api`, `apps/web`, `packages/shared` (Zod schemas + shared types).
 - API: Node + TypeScript + Express, Zod, Prisma + SQLite (Postgres-ready), JWT in httpOnly cookie, bcrypt.
 - Web: React + Vite + TypeScript, TanStack Query (optimistic updates + toasts).
@@ -23,12 +25,15 @@ Production-quality lab reservation app (API + web) with hexagonal architecture o
 - Git: atomic Conventional Commits per logical unit, no AI attribution, stop for user review after each slice.
 
 ## TDD
+
 - Mode: off (no project/session TDD configuration). Source: none. Runner: Vitest. Ordinary functional checks per task.
 
 ## Delivery
+
 - Strategy: ask-on-risk. One branch per slice (`feat/slice-N-*`), user reviews after each slice.
 
 ## Slices
+
 - [ ] S1 Repo setup + tooling (route: delegated direct — writer trigger, 10+ non-trivial files)
 - [ ] S2 Domain + use cases + unit tests (slice-order details inferred: original spec text truncated)
 - [ ] S3 Persistence (Prisma) + infrastructure adapters
@@ -37,6 +42,7 @@ Production-quality lab reservation app (API + web) with hexagonal architecture o
 - [ ] S6 Seed + E2E example + docs (README, ROADMAP, ARCHITECTURE)
 
 ## S1 tasks
+
 - [ ] S1.1 pnpm workspace root (package.json, pnpm-workspace.yaml, .gitignore, .editorconfig, .nvmrc, .env.example)
 - [ ] S1.2 Strict TypeScript base config
 - [ ] S1.3 ESLint (flat, typescript-eslint strict) + Prettier
@@ -46,10 +52,13 @@ Production-quality lab reservation app (API + web) with hexagonal architecture o
 - [ ] S1.7 `apps/web` scaffold (React + Vite + Vitest)
 
 ## Checks
+
 `pnpm install`, `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test`, `pnpm build`.
 
 ## Progress / evidence
+
 - (none yet)
 
 ## Next step
+
 S1 delegated writer.
