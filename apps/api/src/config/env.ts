@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   DEFAULT_DATABASE_URL,
   DEFAULT_PORT,
+  JWT_SECRET_MIN_LENGTH,
   MAX_PORT,
   NODE_ENVIRONMENTS,
   SQLITE_URL_PREFIX,
@@ -28,6 +29,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().max(MAX_PORT).default(DEFAULT_PORT),
   CORS_ORIGIN: corsOriginSchema,
   DATABASE_URL: databaseUrlSchema.default(DEFAULT_DATABASE_URL),
+  JWT_SECRET: z.string().min(JWT_SECRET_MIN_LENGTH),
 });
 
 export interface AppConfig {
@@ -35,6 +37,7 @@ export interface AppConfig {
   readonly port: number;
   readonly corsOrigin: string;
   readonly databaseUrl: string;
+  readonly jwtSecret: string;
 }
 
 export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -42,6 +45,12 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   if (!result.success) {
     throw new Error(`Invalid environment configuration:\n${z.prettifyError(result.error)}`);
   }
-  const { NODE_ENV, PORT, CORS_ORIGIN, DATABASE_URL } = result.data;
-  return { nodeEnv: NODE_ENV, port: PORT, corsOrigin: CORS_ORIGIN, databaseUrl: DATABASE_URL };
+  const { NODE_ENV, PORT, CORS_ORIGIN, DATABASE_URL, JWT_SECRET } = result.data;
+  return {
+    nodeEnv: NODE_ENV,
+    port: PORT,
+    corsOrigin: CORS_ORIGIN,
+    databaseUrl: DATABASE_URL,
+    jwtSecret: JWT_SECRET,
+  };
 }

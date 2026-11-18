@@ -100,7 +100,7 @@ describe('AuthenticateUser', () => {
     });
 
     expect(session.user).toEqual(user);
-    expect(tokens.verify(session.token)).toBe(user.id);
+    expect(tokens.verify(session.token)).toEqual({ id: user.id, role: user.role });
   });
 
   it('accepts the email in a different case', async () => {

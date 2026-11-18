@@ -9,5 +9,7 @@ export const HTTP_STATUS = {
 export const NODE_ENVIRONMENTS = ['development', 'test', 'production'] as const;
 
 /** SQLite file used when `DATABASE_URL` is not provided (relative to `apps/api`). */
+/** HS256 needs a key at least as long as its 256-bit digest. */
+export const JWT_SECRET_MIN_LENGTH = 32;
 export const SQLITE_URL_PREFIX = 'file:';
 export const DEFAULT_DATABASE_URL = 'file:./dev.db';

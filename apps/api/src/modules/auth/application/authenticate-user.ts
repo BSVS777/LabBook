@@ -31,6 +31,6 @@ export class AuthenticateUser {
     if (!(await this.hasher.verify(input.password, user.passwordHash))) {
       throw new InvalidCredentialsError();
     }
-    return { user, token: this.tokens.issue(user.id) };
+    return { user, token: this.tokens.issue({ id: user.id, role: user.role }) };
   }
 }
