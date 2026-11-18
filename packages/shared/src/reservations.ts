@@ -4,7 +4,7 @@ import { z } from 'zod';
 const instantSchema = z.iso.datetime();
 
 export const reservationStatusSchema = z.enum(['active', 'cancelled']);
-export const availabilityStatusSchema = z.enum(['free', 'taken', 'past']);
+export const availabilityStatusSchema = z.enum(['free', 'taken', 'past', 'unavailable']);
 
 export const createReservationBodySchema = z.object({
   labId: z.string().min(1),

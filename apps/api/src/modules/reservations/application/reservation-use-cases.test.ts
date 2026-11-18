@@ -236,7 +236,48 @@ describe('GetLabAvailability', () => {
     });
 
     expect(slots.filter((slot) => slot.status === 'past')).toHaveLength(4);
-    expect(slots[4]?.status).toBe('free');
+    expect(slots[4]?.status).toBe('unavailable');
+  });
+
+  it('marks future slots inside the lead time as unavailable, not free', async () => {
+    const scenario = createReservationScenario(bogota('2026-03-02T09:00'));
+
+    const { slots } = await scenario.getLabAvailability.execute({
+      labId: DEFAULT_LAB_ID,
+      date: MONDAY,
+    });
+    const statusAt = (time: string) =>
+      slots.find((slot) => slot.start.getTime() === bogota(`${MONDAY}T${time}`).getTime())?.status;
+
+    expect(statusAt('09:00')).toBe('unavailable');
+    expect(statusAt('09:30')).toBe('unavailable');
+    expect(statusAt('10:00')).toBe('free');
+  });
+
+  it('marks slots beyond the maximum advance as unavailable', async () => {
+    const scenario = createReservationScenario(bogota('2026-03-02T08:00'));
+
+    const { slots } = await scenario.getLabAvailability.execute({
+      labId: DEFAULT_LAB_ID,
+      date: '2026-03-16',
+    });
+    const statusAt = (time: string) =>
+      slots.find((slot) => slot.start.getTime() === bogota(`2026-03-16T${time}`).getTime())?.status;
+
+    expect(statusAt('07:30')).toBe('free');
+    expect(statusAt('08:00')).toBe('free');
+    expect(statusAt('08:30')).toBe('unavailable');
+  });
+
+  it('lists every slot as unavailable when the whole day is out of the window', async () => {
+    const scenario = createReservationScenario();
+
+    const { slots } = await scenario.getLabAvailability.execute({
+      labId: DEFAULT_LAB_ID,
+      date: '2026-04-06',
+    });
+
+    expect(slots.every((slot) => slot.status === 'unavailable')).toBe(true);
   });
 
   it('returns no slots on a closed day', async () => {

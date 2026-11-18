@@ -6,7 +6,8 @@ import type { Reservation } from '../domain/reservation.js';
 import type { TimeSlot } from '../domain/time-slot.js';
 import type { ReservationRepository } from './ports/reservation-repository.js';
 
-export type AvailabilityStatus = 'free' | 'taken' | 'past';
+/** `unavailable` slots are not past but cannot be booked: lead time or maximum advance is violated. */
+export type AvailabilityStatus = 'free' | 'taken' | 'past' | 'unavailable';
 
 export interface AvailabilitySlot {
   readonly start: Date;
@@ -54,13 +55,14 @@ export class GetLabAvailability {
       slots: daySlots.map((slot) => ({
         start: slot.start,
         end: slot.end,
-        status: statusOf(slot, booked, now),
+        status: this.statusOf(slot, booked, now),
       })),
     };
   }
-}
 
-function statusOf(slot: TimeSlot, booked: readonly Reservation[], now: Date): AvailabilityStatus {
-  if (slot.start < now) return 'past';
-  return booked.some((reservation) => reservation.blocks(slot)) ? 'taken' : 'free';
+  private statusOf(slot: TimeSlot, booked: readonly Reservation[], now: Date): AvailabilityStatus {
+    if (slot.start < now) return 'past';
+    if (booked.some((reservation) => reservation.blocks(slot))) return 'taken';
+    return this.policy.isWithinBookingWindow(slot.start, now) ? 'free' : 'unavailable';
+  }
 }

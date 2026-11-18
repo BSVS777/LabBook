@@ -63,6 +63,12 @@ export class BookingPolicy {
     return slots;
   }
 
+  /** Whether a slot starting at `start` respects the lead-time and maximum-advance limits. */
+  isWithinBookingWindow(start: Date, now: Date): boolean {
+    const untilStart = start.getTime() - now.getTime();
+    return untilStart >= MIN_LEAD_TIME_MILLIS && untilStart <= MAX_ADVANCE_MILLIS;
+  }
+
   private assertLeadTime(slot: TimeSlot, now: Date): void {
     const untilStart = slot.start.getTime() - now.getTime();
     if (untilStart < 0) throw new PastDateError();

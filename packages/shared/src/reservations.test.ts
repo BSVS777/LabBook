@@ -46,6 +46,17 @@ describe('availabilityResponseSchema', () => {
     expect(availabilityResponseSchema.parse(closed)).toEqual(closed);
   });
 
+  it('accepts the unavailable slot status', () => {
+    const slot = {
+      start: '2026-03-02T12:00:00.000Z',
+      end: '2026-03-02T12:30:00.000Z',
+      status: 'unavailable',
+    };
+    const body = { labId: 'l', date: '2026-03-02', isOpen: true, slots: [slot] };
+
+    expect(availabilityResponseSchema.parse(body)).toEqual(body);
+  });
+
   it('rejects an unknown slot status', () => {
     const slot = {
       start: '2026-03-02T12:00:00.000Z',

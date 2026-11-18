@@ -9,6 +9,7 @@ import { DEFAULT_BUSINESS_TIME_ZONE } from './reservation-rules.js';
 const policy = new BookingPolicy(DEFAULT_BUSINESS_TIME_ZONE);
 /** Saturday morning: every weekday of the following week is within 14 days. */
 const NOW = bogota('2026-02-28T08:00');
+const MINUTES_IN_14_DAYS = 14 * 24 * 60;
 
 function rejectionOf(start: string, end: string, now = NOW): DomainErrorCode | undefined {
   try {
@@ -84,7 +85,6 @@ describe('BookingPolicy', () => {
   });
 
   describe('maximum advance', () => {
-    const MINUTES_IN_14_DAYS = 14 * 24 * 60;
     const start = '2026-03-16T10:00';
     const startInstant = bogota(start);
 
@@ -98,6 +98,31 @@ describe('BookingPolicy', () => {
       const now = addMinutes(startInstant, -(MINUTES_IN_14_DAYS + 30));
 
       expect(rejectionOf(start, '2026-03-16T10:30', now)).toBe(ERROR_CODES.TOO_FAR_IN_ADVANCE);
+    });
+  });
+
+  describe('booking window', () => {
+    const slotStart = bogota('2026-03-02T10:00');
+
+    it('accepts a start exactly at the minimum lead time', () => {
+      expect(policy.isWithinBookingWindow(slotStart, addMinutes(slotStart, -60))).toBe(true);
+    });
+
+    it('rejects a start inside the lead time', () => {
+      expect(policy.isWithinBookingWindow(slotStart, addMinutes(slotStart, -30))).toBe(false);
+    });
+
+    it('rejects a start that already passed', () => {
+      expect(policy.isWithinBookingWindow(slotStart, addMinutes(slotStart, 30))).toBe(false);
+    });
+
+    it('accepts a start exactly at the maximum advance and rejects one slot later', () => {
+      expect(
+        policy.isWithinBookingWindow(slotStart, addMinutes(slotStart, -MINUTES_IN_14_DAYS)),
+      ).toBe(true);
+      expect(
+        policy.isWithinBookingWindow(slotStart, addMinutes(slotStart, -(MINUTES_IN_14_DAYS + 30))),
+      ).toBe(false);
     });
   });
 
