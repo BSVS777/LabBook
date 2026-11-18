@@ -40,7 +40,10 @@ function assertCalendarDate(date: string): void {
   }
 }
 
-/** Pure booking rules 2-4 that depend on the calendar and on "now". */
+/**
+ * Booking rules 3 and 4 (opening hours, lead time and advance window), which depend on the calendar
+ * and on "now". Rule 2 (duration and slot alignment) lives in `TimeSlot`.
+ */
 export class BookingPolicy {
   constructor(private readonly timeZone: string) {}
 
