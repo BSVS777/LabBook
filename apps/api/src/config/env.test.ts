@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_BUSINESS_TIME_ZONE } from '../modules/reservations/domain/reservation-rules.js';
 import { DEFAULT_DATABASE_URL, DEFAULT_PORT, JWT_SECRET_MIN_LENGTH } from './constants.js';
 import { loadConfig } from './env.js';
 
@@ -23,6 +24,7 @@ describe('loadConfig', () => {
       corsOrigin: 'http://localhost:5173',
       databaseUrl: DEFAULT_DATABASE_URL,
       jwtSecret: VALID_ENV.JWT_SECRET,
+      businessTimeZone: DEFAULT_BUSINESS_TIME_ZONE,
     });
   });
 
@@ -82,5 +84,13 @@ describe('loadConfig', () => {
     const secret = 'x'.repeat(JWT_SECRET_MIN_LENGTH);
 
     expect(load({ JWT_SECRET: secret }).jwtSecret).toBe(secret);
+  });
+
+  it('accepts another IANA time zone for the business calendar', () => {
+    expect(load({ BUSINESS_TIME_ZONE: 'Europe/Madrid' }).businessTimeZone).toBe('Europe/Madrid');
+  });
+
+  it.each(['Mars/Phobos', 'Not a zone', ''])('rejects %j as a business time zone', (zone) => {
+    expect(() => load({ BUSINESS_TIME_ZONE: zone })).toThrow(/BUSINESS_TIME_ZONE/);
   });
 });
