@@ -8,11 +8,12 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "pnpm -r --parallel --filter @labs/api --filter @labs/web dev",
+    "dev": "pnpm build:shared && pnpm -r --parallel dev",
+    "build:shared": "pnpm --filter @labs/shared build",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
-    "lint": "eslint .",
+    "typecheck": "pnpm build:shared && pnpm -r typecheck",
+    "test": "pnpm build:shared && pnpm -r test",
+    "lint": "pnpm build:shared && eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
