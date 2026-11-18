@@ -23,7 +23,9 @@ describe('GET /api/health', () => {
 
     expect(allowed.headers['access-control-allow-origin']).toBe(ALLOWED_ORIGIN);
     expect(allowed.headers['access-control-allow-credentials']).toBe('true');
+    expect(denied.headers['access-control-allow-origin']).toBe(ALLOWED_ORIGIN);
     expect(denied.headers['access-control-allow-origin']).not.toBe(foreignOrigin);
+    expect(denied.headers['access-control-allow-origin']).not.toBe('*');
   });
 
   it('sets security headers and hides the framework signature', async () => {
