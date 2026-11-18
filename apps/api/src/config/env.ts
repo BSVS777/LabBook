@@ -2,10 +2,16 @@ import { z } from 'zod';
 
 import { DEFAULT_PORT, MAX_PORT, NODE_ENVIRONMENTS } from './constants.js';
 
+const corsOriginSchema = z
+  .url({ protocol: /^https?$/ })
+  .refine((value) => URL.canParse(value) && new URL(value).origin === value, {
+    message: 'Must be an origin without path, query or trailing slash',
+  });
+
 const envSchema = z.object({
   NODE_ENV: z.enum(NODE_ENVIRONMENTS).default('development'),
   PORT: z.coerce.number().int().positive().max(MAX_PORT).default(DEFAULT_PORT),
-  CORS_ORIGIN: z.url(),
+  CORS_ORIGIN: corsOriginSchema,
 });
 
 export interface AppConfig {

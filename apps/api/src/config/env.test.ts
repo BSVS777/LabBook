@@ -29,4 +29,25 @@ describe('loadConfig', () => {
       /PORT/,
     );
   });
+
+  it.each(['ftp://localhost:5173', 'localhost:5173', 'not a url'])(
+    'rejects %s as a CORS origin',
+    (corsOrigin) => {
+      expect(() => loadConfig({ CORS_ORIGIN: corsOrigin })).toThrow(/CORS_ORIGIN/);
+    },
+  );
+
+  it.each([
+    'http://localhost:5173/',
+    'https://app.example.com/path',
+    'https://app.example.com?x=1',
+  ])('rejects %s because it is not a bare origin', (corsOrigin) => {
+    expect(() => loadConfig({ CORS_ORIGIN: corsOrigin })).toThrow(/CORS_ORIGIN/);
+  });
+
+  it('accepts an https origin', () => {
+    expect(loadConfig({ CORS_ORIGIN: 'https://app.example.com' }).corsOrigin).toBe(
+      'https://app.example.com',
+    );
+  });
 });
