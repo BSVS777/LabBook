@@ -100,4 +100,23 @@ describe('BookingPolicy', () => {
       expect(rejectionOf(start, '2026-03-16T10:30', now)).toBe(ERROR_CODES.TOO_FAR_IN_ADVANCE);
     });
   });
+
+  describe('daily slots', () => {
+    it('lists 28 half-hour slots between opening and closing on an open day', () => {
+      const slots = policy.slotsOf('2026-03-02');
+
+      expect(slots).toHaveLength(28);
+      expect(slots[0]?.start).toEqual(bogota('2026-03-02T07:00'));
+      expect(slots[27]?.end).toEqual(bogota('2026-03-02T21:00'));
+    });
+
+    it('lists no slots and reports closed on Sunday', () => {
+      expect(policy.isOpenOn('2026-03-08')).toBe(false);
+      expect(policy.slotsOf('2026-03-08')).toEqual([]);
+    });
+
+    it('reports Saturday as open', () => {
+      expect(policy.isOpenOn('2026-03-07')).toBe(true);
+    });
+  });
 });

@@ -1,4 +1,8 @@
-import { minuteOfDay, toLocalDateTime } from '../../../shared/domain/business-calendar.js';
+import {
+  minuteOfDay,
+  toInstant,
+  toLocalDateTime,
+} from '../../../shared/domain/business-calendar.js';
 import {
   MILLIS_PER_MINUTE,
   MINUTES_PER_DAY,
@@ -17,8 +21,9 @@ import {
   MIN_LEAD_TIME_MINUTES,
   OPEN_WEEKDAYS,
   OPENING_HOUR,
+  SLOT_MINUTES,
 } from './reservation-rules.js';
-import type { TimeSlot } from './time-slot.js';
+import { TimeSlot } from './time-slot.js';
 
 const OPENING_MINUTE = OPENING_HOUR * MINUTES_PER_HOUR;
 const CLOSING_MINUTE = CLOSING_HOUR * MINUTES_PER_HOUR;
@@ -32,6 +37,30 @@ export class BookingPolicy {
   assertCanBook(slot: TimeSlot, now: Date): void {
     this.assertLeadTime(slot, now);
     this.assertOpeningHours(slot);
+  }
+
+  /** Whether labs open on the given local date (`YYYY-MM-DD`). */
+  isOpenOn(date: string): boolean {
+    const { weekday } = toLocalDateTime(
+      toInstant(date, OPENING_MINUTE, this.timeZone),
+      this.timeZone,
+    );
+    return OPEN_WEEKDAYS.includes(weekday);
+  }
+
+  /** Every bookable slot of the given local date, in order; empty when closed. */
+  slotsOf(date: string): TimeSlot[] {
+    if (!this.isOpenOn(date)) return [];
+    const slots: TimeSlot[] = [];
+    for (let minute = OPENING_MINUTE; minute < CLOSING_MINUTE; minute += SLOT_MINUTES) {
+      slots.push(
+        TimeSlot.create(
+          toInstant(date, minute, this.timeZone),
+          toInstant(date, minute + SLOT_MINUTES, this.timeZone),
+        ),
+      );
+    }
+    return slots;
   }
 
   private assertLeadTime(slot: TimeSlot, now: Date): void {
