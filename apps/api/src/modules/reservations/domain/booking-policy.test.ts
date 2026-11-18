@@ -140,6 +140,18 @@ describe('BookingPolicy', () => {
       expect(policy.slotsOf('2026-03-08')).toEqual([]);
     });
 
+    it.each(['garbage', '2026-13-45', '2026-02-30', ''])(
+      'rejects %j as a date with INVALID_TIME_SLOT instead of a RangeError',
+      (date) => {
+        expect(() => policy.isOpenOn(date)).toThrow(
+          expect.objectContaining({ code: ERROR_CODES.INVALID_TIME_SLOT }),
+        );
+        expect(() => policy.slotsOf(date)).toThrow(
+          expect.objectContaining({ code: ERROR_CODES.INVALID_TIME_SLOT }),
+        );
+      },
+    );
+
     it('reports Saturday as open', () => {
       expect(policy.isOpenOn('2026-03-07')).toBe(true);
     });

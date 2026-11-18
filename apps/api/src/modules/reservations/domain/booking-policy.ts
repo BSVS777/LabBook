@@ -11,6 +11,7 @@ import {
 import {
   ClosedDayError,
   InsufficientLeadTimeError,
+  InvalidTimeSlotError,
   OutsideOpeningHoursError,
   PastDateError,
   TooFarInAdvanceError,
@@ -25,10 +26,19 @@ import {
 } from './reservation-rules.js';
 import { TimeSlot } from './time-slot.js';
 
+const DATE_LENGTH = 'YYYY-MM-DD'.length;
 const OPENING_MINUTE = OPENING_HOUR * MINUTES_PER_HOUR;
 const CLOSING_MINUTE = CLOSING_HOUR * MINUTES_PER_HOUR;
 const MIN_LEAD_TIME_MILLIS = MIN_LEAD_TIME_MINUTES * MILLIS_PER_MINUTE;
 const MAX_ADVANCE_MILLIS = MAX_ADVANCE_DAYS * MINUTES_PER_DAY * MILLIS_PER_MINUTE;
+
+/** Rejects anything that is not a real calendar date written as `YYYY-MM-DD`. */
+function assertCalendarDate(date: string): void {
+  const parsed = new Date(`${date}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, DATE_LENGTH) !== date) {
+    throw new InvalidTimeSlotError();
+  }
+}
 
 /** Pure booking rules 2-4 that depend on the calendar and on "now". */
 export class BookingPolicy {
@@ -41,11 +51,9 @@ export class BookingPolicy {
 
   /** Whether labs open on the given local date (`YYYY-MM-DD`). */
   isOpenOn(date: string): boolean {
-    const { weekday } = toLocalDateTime(
-      toInstant(date, OPENING_MINUTE, this.timeZone),
-      this.timeZone,
-    );
-    return OPEN_WEEKDAYS.includes(weekday);
+    assertCalendarDate(date);
+    const opening = toInstant(date, OPENING_MINUTE, this.timeZone);
+    return OPEN_WEEKDAYS.includes(toLocalDateTime(opening, this.timeZone).weekday);
   }
 
   /** Every bookable slot of the given local date, in order; empty when closed. */

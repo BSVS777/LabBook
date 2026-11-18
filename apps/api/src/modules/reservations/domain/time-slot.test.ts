@@ -53,8 +53,12 @@ describe('TimeSlot', () => {
       expect(slotCode(START, '2026-03-02T08:30')).toBe(ERROR_CODES.INVALID_TIME_SLOT);
     });
 
-    it('rejects invalid dates', () => {
-      expect(() => TimeSlot.create(new Date('nope'), bogota(START))).toThrow(
+    it.each([
+      ['start', new Date('nope'), bogota(START)],
+      ['end', bogota(START), new Date('nope')],
+      ['start and end', new Date('nope'), new Date('nope')],
+    ])('rejects an invalid %s with INVALID_TIME_SLOT', (_label, start, end) => {
+      expect(() => TimeSlot.create(start, end)).toThrow(
         expect.objectContaining({ code: ERROR_CODES.INVALID_TIME_SLOT }),
       );
     });

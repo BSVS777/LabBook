@@ -291,6 +291,14 @@ describe('GetLabAvailability', () => {
     expect(availability).toMatchObject({ isOpen: false, slots: [] });
   });
 
+  it('rejects an invalid date with INVALID_TIME_SLOT', async () => {
+    const scenario = createReservationScenario();
+
+    await expect(
+      scenario.getLabAvailability.execute({ labId: DEFAULT_LAB_ID, date: 'garbage' }),
+    ).rejects.toMatchObject({ code: ERROR_CODES.INVALID_TIME_SLOT });
+  });
+
   it('rejects an unknown lab', async () => {
     const scenario = createReservationScenario();
 
