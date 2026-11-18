@@ -59,6 +59,11 @@ export class Reservation {
     return this.props.status === 'active';
   }
 
+  /** An active reservation blocks any slot that intersects its own. */
+  blocks(slot: TimeSlot): boolean {
+    return this.isActive && this.slot.overlaps(slot);
+  }
+
   /** Only the owner or an admin may cancel, and only an active reservation that has not started. */
   cancel(actor: Actor, now: Date): Reservation {
     if (actor.role !== 'admin' && actor.id !== this.userId) throw new ForbiddenError();
