@@ -100,7 +100,7 @@ Request/response schemas from `@labs/shared`.
 ## Slices
 
 - [x] S1 Repo setup + tooling (route: delegated direct — writer trigger, 10+ non-trivial files)
-- [ ] S2 Domain + use cases + unit tests (slice-order details inferred: original spec text truncated)
+- [x] S2 Domain + use cases + unit tests (slice-order details inferred: original spec text truncated)
 - [ ] S3 Persistence (Prisma) + infrastructure adapters
 - [ ] S4 HTTP API + integration tests
 - [ ] S5 Features (web UI)
@@ -118,13 +118,22 @@ Request/response schemas from `@labs/shared`.
 
 ## S2 tasks (route: delegated direct — writer trigger)
 
-- [ ] S2.0 S1 follow-ups: handle listen errors, stronger denied-origin CORS test, `CORS_ORIGIN` URL validation
-- [ ] S2.1 Reservation rule constants + `TimeSlot` value object + domain errors
-- [ ] S2.2 Reservation entity + booking policy (rules 1–4) + cancel rules
-- [ ] S2.3 Labs domain + use cases (`ListLabs`, `GetLab`)
-- [ ] S2.4 Reservation use cases + in-memory repositories
-- [ ] S2.5 Auth domain + use cases (ports for hasher/token)
-- [ ] S2.6 Shared Zod schemas + rule constants in `@labs/shared`
+- [x] S2.0 S1 follow-ups: handle listen errors, stronger denied-origin CORS test, `CORS_ORIGIN` URL validation
+- [x] S2.1 Reservation rule constants + `TimeSlot` value object + domain errors
+- [x] S2.2 Reservation entity + booking policy (rules 1–4) + cancel rules
+- [x] S2.3 Labs domain + use cases (`ListLabs`, `GetLab`)
+- [x] S2.4 Reservation use cases + in-memory repositories
+- [x] S2.5 Auth domain + use cases (ports for hasher/token)
+- [x] S2.6 Shared Zod schemas + rule constants in `@labs/shared`
+
+## S3 tasks (route: delegated direct — writer trigger)
+
+- [ ] S3.0 S2 review follow-ups: self-registration always student (R1-001); availability marks slots outside the
+      booking window as `unavailable`; invalid Date guard; doc/test nits
+- [ ] S3.1 Atomic overlap check + save (port method) and unique-email race handling
+- [ ] S3.2 Prisma schema + migration (SQLite, Postgres-ready) + client setup
+- [ ] S3.3 Prisma repositories (users, labs, reservations) + integration tests on a test DB
+- [ ] S3.4 Real adapters: bcrypt hasher, JWT token service, system clock, UUID id generator; env validation
 
 ## Checks
 
@@ -137,6 +146,15 @@ Request/response schemas from `@labs/shared`.
 - S1 decisions: TypeScript pinned ~6.0.3 (typescript-eslint support); @labs/shared built to dist via tsc; esbuild build script denied in pnpm-workspace.yaml; .gitattributes eol=lf.
 - S1 RDD: assessed medium (executable .husky/commit-msg); user granted; reliability lens APPROVED and acknowledged (authority burned). Reviewed boundary advances to 3feaa18. Advisory follow-ups (non-blocking): CORS denied-origin test assertion weak (apps/api/src/app.test.ts); CORS_ORIGIN env validation loose (apps/api/src/config/env.ts); server listen errors not handled (apps/api/src/server.ts, WARNING); workspace tests depend on shared dist build.
 
+- S2 commits: 07122df, 65749a5, 96ecfeb (S2.0), 9db6fbd (S2.1), af88ea9 + 5e00505 (S2.2), 8a1681d (S2.3),
+  80ddd07 (S2.4), 831c085 (S2.5), 5d9b429 (S2.6), b7b012d (import-boundary lint rule).
+- S2 checks (writer): install, lint, format:check, typecheck, test (shared 20, api 108, web 1), build all exit 0.
+  Parent spot check: test pass, no attribution lines.
+- S2 RDD: high (auth). User granted. 4-lens review APPROVED and acknowledged; boundary → b7b012d.
+  Advisory follow-ups folded into S3.0/S3.1 (role escalation via register input, availability free-but-unbookable,
+  overlap check-then-save race, duplicate-email race, invalid Date RangeError, misleading doc, test magic millis,
+  redundant CORS assertion) and S4 (compile-time check that API error codes ⊆ shared ERROR_CODES).
+
 ## Next step
 
-S2 delegated writer on `feat/slice-2-domain`.
+S3 delegated writer on `feat/slice-3-persistence`.
