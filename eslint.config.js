@@ -7,6 +7,7 @@ import tseslint from 'typescript-eslint';
 
 const TEST_FILES = ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/test/**/*.{ts,tsx}'];
 const CONFIG_FILES = ['**/*.config.{js,ts,mjs,cjs}', '**/vitest.setup.ts'];
+const FRAMEWORK_IMPORTS = ['express', 'zod', '@prisma/*', '@labs/shared', 'node:*'];
 const TYPED_FILES = ['**/*.{ts,tsx}'];
 
 export default tseslint.config(
@@ -40,6 +41,45 @@ export default tseslint.config(
   {
     files: ['apps/api/**/*.ts', 'packages/**/*.ts'],
     languageOptions: { globals: globals.node },
+  },
+  {
+    files: ['apps/api/src/modules/*/domain/**/*.ts', 'apps/api/src/shared/domain/**/*.ts'],
+    ignores: TEST_FILES,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/infrastructure/**', '**/application/**'],
+              message: 'The domain must not depend on outer layers.',
+            },
+            { group: FRAMEWORK_IMPORTS, message: 'The domain must stay framework-free.' },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: [
+      'apps/api/src/modules/*/application/**/*.ts',
+      'apps/api/src/shared/application/**/*.ts',
+    ],
+    ignores: TEST_FILES,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/infrastructure/**'],
+              message: 'Use cases depend on ports, never on infrastructure.',
+            },
+            { group: FRAMEWORK_IMPORTS, message: 'Use cases must stay framework-free.' },
+          ],
+        },
+      ],
+    },
   },
   {
     files: ['apps/web/**/*.{ts,tsx}'],
