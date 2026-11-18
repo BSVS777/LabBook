@@ -1,0 +1,49 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/shared/infrastructure/prisma/generated"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Roles and statuses are plain strings validated by the infrastructure mappers:
+// SQLite has no enums and this keeps a later move to PostgreSQL trivial.
+
+model User {
+  id           String        @id
+  email        String        @unique
+  name         String
+  role         String
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  reservations Reservation[]
+}
+
+model Lab {
+  id           String        @id
+  name         String        @unique
+  location     String
+  capacity     Int
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  reservations Reservation[]
+}
+
+model Reservation {
+  id          String    @id
+  labId       String
+  userId      String
+  startsAt    DateTime
+  endsAt      DateTime
+  status      String
+  createdAt   DateTime
+  cancelledAt DateTime?
+  lab         Lab       @relation(fields: [labId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([labId, startsAt])
+  @@index([userId])
+}

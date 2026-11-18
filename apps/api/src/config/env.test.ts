@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_PORT } from './constants.js';
+import { DEFAULT_DATABASE_URL, DEFAULT_PORT } from './constants.js';
 import { loadConfig } from './env.js';
 
 describe('loadConfig', () => {
@@ -11,6 +11,7 @@ describe('loadConfig', () => {
       nodeEnv: 'development',
       port: DEFAULT_PORT,
       corsOrigin: 'http://localhost:5173',
+      databaseUrl: DEFAULT_DATABASE_URL,
     });
   });
 
@@ -50,4 +51,22 @@ describe('loadConfig', () => {
       'https://app.example.com',
     );
   });
+
+  it('accepts a SQLite database URL', () => {
+    const config = loadConfig({
+      CORS_ORIGIN: 'http://localhost:5173',
+      DATABASE_URL: 'file:./x.db',
+    });
+
+    expect(config.databaseUrl).toBe('file:./x.db');
+  });
+
+  it.each(['postgresql://localhost/db', 'file:', './dev.db', ''])(
+    'rejects %j as a database URL',
+    (databaseUrl) => {
+      expect(() =>
+        loadConfig({ CORS_ORIGIN: 'http://localhost:5173', DATABASE_URL: databaseUrl }),
+      ).toThrow(/DATABASE_URL/);
+    },
+  );
 });

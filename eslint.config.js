@@ -12,7 +12,13 @@ const TYPED_FILES = ['**/*.{ts,tsx}'];
 
 export default tseslint.config(
   {
-    ignores: ['**/node_modules/**', '**/dist/**', '**/coverage/**', '**/playwright-report/**'],
+    ignores: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/coverage/**',
+      '**/playwright-report/**',
+      '**/prisma/generated/**',
+    ],
   },
   js.configs.recommended,
   {

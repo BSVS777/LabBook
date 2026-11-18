@@ -7,3 +7,7 @@ export const HTTP_STATUS = {
 } as const;
 
 export const NODE_ENVIRONMENTS = ['development', 'test', 'production'] as const;
+
+/** SQLite file used when `DATABASE_URL` is not provided (relative to `apps/api`). */
+export const SQLITE_URL_PREFIX = 'file:';
+export const DEFAULT_DATABASE_URL = 'file:./dev.db';
