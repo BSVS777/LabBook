@@ -30,7 +30,72 @@ Production-quality lab reservation app (API + web) with hexagonal architecture o
 
 ## Delivery
 
-- Strategy: ask-on-risk. One branch per slice (`feat/slice-N-*`), user reviews after each slice.
+- Strategy: auto-chain, `feature-branch-chain`. One branch per slice, each based on the previous slice
+  branch (`feat/slice-1-setup` → `feat/slice-2-domain` → `feat/slice-3-persistence` → `feat/slice-4-http`
+  → `feat/slice-5-web` → `feat/slice-6-e2e-docs`). Each pushed to `origin`; PR base = previous slice branch.
+- 2026-11-18: user said "I trust in you, go ahead with the rest of the application" → slices S2–S6 run
+  back-to-back without a stop between slices; native review consent is still relayed to the user.
+
+## Design contract (shared by all slices)
+
+### Time and calendar
+
+- All instants stored and transported as UTC ISO-8601 strings / `Date`.
+- Business rules evaluated in a configured business time zone (`BUSINESS_TIME_ZONE`, default
+  `America/Bogota`, assumption — user location unknown) using the built-in `Intl` API (no date libs in domain).
+- Domain never calls `new Date()` for "now": a `Clock` port is injected.
+
+### Rule constants (single source: `apps/api/src/modules/reservations/domain/reservation-rules.ts`)
+
+`SLOT_MINUTES = 30`, `MIN_DURATION_MINUTES = 30`, `MAX_DURATION_MINUTES = 120`, `OPENING_HOUR = 7`,
+`CLOSING_HOUR = 21`, `OPEN_WEEKDAYS = Mon–Sat`, `MIN_LEAD_TIME_MINUTES = 60`, `MAX_ADVANCE_DAYS = 14`.
+Shared copies of the client-relevant values live in `@labs/shared` (web uses them for UI hints); the API
+domain is authoritative.
+
+### Entities and value objects
+
+- `User { id, email, name, role: 'student' | 'admin', passwordHash }` (auth module).
+- `Lab { id, name, location, capacity, isActive }` (labs module).
+- `TimeSlot` VO `{ start, end }`: start < end, both aligned to 30-min boundaries, duration 30–120 min.
+- `Reservation { id, labId, userId, slot: TimeSlot, status: 'active' | 'cancelled', createdAt }`.
+
+### Rules (domain, pure)
+
+1. No overlap: an active reservation for the same lab whose slot intersects (`a.start < b.end && b.start < a.end`).
+   Back-to-back slots are allowed.
+2. Duration 30–120 min, start/end aligned to 30-min slots.
+3. Inside opening hours Mon–Sat; start ≥ 07:00 and end ≤ 21:00 local; same local day.
+4. start ≥ now + 60 min; start not in the past; start ≤ now + 14 days.
+
+- Cancel: owner or admin only; only `active`; only before the slot starts.
+- Lab must exist and be active to be booked.
+
+### Domain errors (each has a stable `code`)
+
+`INVALID_TIME_SLOT`, `SLOT_NOT_ALIGNED`, `INVALID_DURATION`, `OUTSIDE_OPENING_HOURS`, `CLOSED_DAY`,
+`INSUFFICIENT_LEAD_TIME`, `PAST_DATE`, `TOO_FAR_IN_ADVANCE`, `RESERVATION_OVERLAP`, `LAB_NOT_FOUND`,
+`LAB_INACTIVE`, `RESERVATION_NOT_FOUND`, `RESERVATION_ALREADY_CANCELLED`, `RESERVATION_ALREADY_STARTED`,
+`FORBIDDEN`, `INVALID_CREDENTIALS`, `EMAIL_ALREADY_REGISTERED`, `UNAUTHENTICATED`.
+HTTP layer (S4) maps code → status + Spanish message in one table.
+
+### Ports (application layer)
+
+`ReservationRepository` (save, findById, findActiveOverlapping(labId, slot), findByUser, findActiveByLabBetween),
+`LabRepository` (findAll, findById), `UserRepository` (findByEmail, findById, save), `Clock`, `IdGenerator`,
+`PasswordHasher`, `TokenService`. In-memory adapters for tests live in each module's `infrastructure/in-memory`.
+
+### Use cases
+
+Reservations: `CreateReservation`, `CancelReservation`, `ListMyReservations`, `GetLabAvailability(labId, date)`
+(returns 30-min slots of that local day with free/taken/past flags). Labs: `ListLabs`, `GetLab`.
+Auth: `RegisterUser`, `AuthenticateUser`, `GetCurrentUser`.
+
+### HTTP API (S4)
+
+`POST /api/auth/register|login|logout`, `GET /api/auth/me`, `GET /api/labs`, `GET /api/labs/:labId`,
+`GET /api/labs/:labId/availability?date=YYYY-MM-DD`, `GET /api/reservations/me`, `POST /api/reservations`,
+`POST /api/reservations/:id/cancel`. JWT in httpOnly, `SameSite=Strict`, `Secure` in production cookie.
+Request/response schemas from `@labs/shared`.
 
 ## Slices
 
@@ -51,6 +116,16 @@ Production-quality lab reservation app (API + web) with hexagonal architecture o
 - [x] S1.6 `apps/api` scaffold (Express, helmet, CORS, /health, Vitest + Supertest)
 - [x] S1.7 `apps/web` scaffold (React + Vite + Vitest)
 
+## S2 tasks (route: delegated direct — writer trigger)
+
+- [ ] S2.0 S1 follow-ups: handle listen errors, stronger denied-origin CORS test, `CORS_ORIGIN` URL validation
+- [ ] S2.1 Reservation rule constants + `TimeSlot` value object + domain errors
+- [ ] S2.2 Reservation entity + booking policy (rules 1–4) + cancel rules
+- [ ] S2.3 Labs domain + use cases (`ListLabs`, `GetLab`)
+- [ ] S2.4 Reservation use cases + in-memory repositories
+- [ ] S2.5 Auth domain + use cases (ports for hasher/token)
+- [ ] S2.6 Shared Zod schemas + rule constants in `@labs/shared`
+
 ## Checks
 
 `pnpm install`, `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test`, `pnpm build`.
@@ -64,4 +139,4 @@ Production-quality lab reservation app (API + web) with hexagonal architecture o
 
 ## Next step
 
-User review of slice 1; then S2 (domain + use cases + unit tests), fold in S1 advisory follow-ups.
+S2 delegated writer on `feat/slice-2-domain`.
