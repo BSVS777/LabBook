@@ -6,7 +6,9 @@ import {
 } from './reservation-errors.js';
 import type { TimeSlot } from './time-slot.js';
 
-export type ReservationStatus = 'active' | 'cancelled';
+export const RESERVATION_STATUSES = ['active', 'cancelled'] as const;
+
+export type ReservationStatus = (typeof RESERVATION_STATUSES)[number];
 
 export interface ReservationProps {
   readonly id: string;
